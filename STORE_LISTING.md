@@ -39,6 +39,11 @@ Inline Text Formatter provides an instant floating formatting toolbar directly i
 
 Select any text within an editable field on LinkedIn or X (Twitter) to format it instantly with bold, italic, and Unicode typography.
 
+WHAT'S NEW IN v1.2.1
+- Fixed Floating Toolbar Occlusion: Resolved an issue where the inline floating toolbar could be rendered behind modal dialogs (such as LinkedIn's "Start a post" modal or compose dialogs) due to dynamic DOM insertion order.
+- Dynamic DOM Promotion: The toolbar now dynamically promotes its host element to the top of the stacking context upon activation, ensuring 100% visibility and clickability above all dialogs, drawers, and overlay backdrops.
+- Retained Zero-Size Anchor Architecture: Preserved non-intrusive hit-testing so background clicks and LinkedIn Messaging remain completely unblocked.
+
 WHAT'S NEW IN v1.2.0
 - Rebranded to Inline Text Formatter: Highlights our pure inline, floating toolbar experience without annoying modal popups.
 - Full X (Twitter) Support: Format tweets, threads, quote tweets, and replies with bold, italic, and stylish fonts. No X Premium required.
@@ -124,7 +129,7 @@ https://github.com/xemee82/inline-text-formatter
 
 ## 5. 打包发布文件 (Release Package)
 
-- **ZIP 包路径**: `inline-text-formatter-v1.2.0.zip`
+- **ZIP 包路径**: `inline-text-formatter-v1.2.1.zip`
 - **校验状态**: 
   - 100% 满足 Manifest V3 规范
   - 根目录直置 `manifest.json`（无多余层级包装）

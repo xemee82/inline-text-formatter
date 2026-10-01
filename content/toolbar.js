@@ -25,12 +25,12 @@ window.FloatingToolbar = (function() {
     hostElement = document.createElement('div');
     hostElement.id = 'lif-toolbar-host';
     hostElement.setAttribute('data-lif-toolbar', 'true');
-    hostElement.style.position = 'fixed';
-    hostElement.style.zIndex = '2147483647';
-    hostElement.style.pointerEvents = 'none';
-    hostElement.style.width = '0';
-    hostElement.style.height = '0';
-    hostElement.style.overflow = 'visible';
+    hostElement.style.setProperty('position', 'fixed', 'important');
+    hostElement.style.setProperty('z-index', '2147483647', 'important');
+    hostElement.style.setProperty('pointer-events', 'none', 'important');
+    hostElement.style.setProperty('width', '0', 'important');
+    hostElement.style.setProperty('height', '0', 'important');
+    hostElement.style.setProperty('overflow', 'visible', 'important');
     hostElement.style.left = '0px';
     hostElement.style.top = '0px';
     shadowRoot = hostElement.attachShadow({ mode: 'open' });
@@ -51,6 +51,8 @@ window.FloatingToolbar = (function() {
         position: absolute;
         left: 0;
         top: 0;
+        z-index: 2147483647;
+        isolation: isolate;
         opacity: 0;
         pointer-events: none;
         transform: translateY(4px);
@@ -164,9 +166,17 @@ window.FloatingToolbar = (function() {
   function show(rect) {
     if (!hostElement || !toolbarElement) return;
 
-    if (!document.body.contains(hostElement)) {
-      document.body.appendChild(hostElement);
-    }
+    // 核心修复：无条件将宿主重新 append 到 document.body 末尾
+    // 现代 SPA (如 LinkedIn / X) 会动态挂载弹窗、抽屉或遮罩容器 (如 #interop-outlet、artdeco-modal-outlet)
+    // 根据 CSS 层叠上下文规范，同级正 z-index 定位元素在层叠冲突时，以 DOM 树先后顺序 (Document Order) 决定层叠
+    // 无论外部何时插入了何种高层级弹窗，只要每次激活时重新 append 到 body 末尾，宿主元素就始终位居 DOM 树最底端，
+    // 从而 100% 绝对置顶于任何动态弹窗遮罩之上，彻底解决浮窗被弹窗遮挡的问题。
+    document.body.appendChild(hostElement);
+
+    // 再次强制确保层叠上下文与定位属性不被外部宿主样式污染
+    hostElement.style.setProperty('position', 'fixed', 'important');
+    hostElement.style.setProperty('z-index', '2147483647', 'important');
+    hostElement.style.setProperty('pointer-events', 'none', 'important');
 
     // 注意：不在宿主上设置 pointer-events:auto（这正是 Messaging Bug 的根因）
     // 仅在 Shadow DOM 内部的 .lif-toolbar 上通过 .visible 类启用 pointer-events

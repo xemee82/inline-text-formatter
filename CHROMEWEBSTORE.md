@@ -1,7 +1,7 @@
 # Chrome Web Store & Edge Add-ons 开发者后台提交完整指南
 
-> **版本**：v1.2.0  
-> **最后更新**：2026-09-25  
+> **版本**：v1.2.1  
+> **最后更新**：2026-10-01  
 > **适用平台**：Google Chrome Web Store Developer Dashboard / Microsoft Edge Partner Center  
 > **项目名称**：Inline Text Formatter for LinkedIn & X: Bold, Italic & Font Styles  
 
@@ -27,6 +27,11 @@
 Inline Text Formatter provides an instant floating formatting toolbar directly inside LinkedIn and X (Twitter) post composers, comment fields, threads, and reply boxes. It eliminates the need to switch browser tabs to copy-paste formatted text from external generator websites or clumsy modal popups.
 
 Select any text within an editable field on LinkedIn or X (Twitter) to format it instantly with bold, italic, and Unicode typography.
+
+WHAT'S NEW IN v1.2.1
+- Fixed Floating Toolbar Occlusion: Resolved an issue where the inline floating toolbar could be rendered behind modal dialogs (such as LinkedIn's "Start a post" modal or compose dialogs) due to dynamic DOM insertion order.
+- Dynamic DOM Promotion: The toolbar now dynamically promotes its host element to the top of the stacking context upon activation, ensuring 100% visibility and clickability above all dialogs, drawers, and overlay backdrops.
+- Retained Zero-Size Anchor Architecture: Preserved non-intrusive hit-testing so background clicks and LinkedIn Messaging remain completely unblocked.
 
 WHAT'S NEW IN v1.2.0
 - Rebranded to Inline Text Formatter: Highlights our pure inline, floating toolbar experience without annoying modal popups.
@@ -97,7 +102,7 @@ https://github.com/xemee82/inline-text-formatter
 所有素材均已保存在 iCloud 目录：  
 `/Users/tylerh/Library/Mobile Documents/com~apple~CloudDocs/Formatly_Store_Assets/`
 
-- **ZIP 上传包**: `inline-text-formatter-v1.2.0.zip`
+- **ZIP 上传包**: `inline-text-formatter-v1.2.1.zip`
 - **应用图标**: `icons/icon-128.png` (128×128)
 - **截图 1**: `screenshot-1-toolbar.png` (1280×800)
 - **截图 2**: `screenshot-2-styles.png` (1280×800)
@@ -106,14 +111,13 @@ https://github.com/xemee82/inline-text-formatter
 
 ---
 
-## 5. v1.2.0 更新提交说明 (Notes for Certification / Changelog)
+## 5. v1.2.1 更新提交说明 (Notes for Certification / Changelog)
 
 在更新现有 Edge 商店上架或重新提交 Chrome 审核时，在 **"What's new in this version"** 或 **Changelog** 字段填入：
 
 ```text
-v1.2.0 Changelog:
-- BRANDING: Renamed to "Inline Text Formatter" to highlight our seamless inline floating toolbar workflow.
-- NEW: Added full support for X (Twitter) posts, threads, quote tweets, and replies with bold, italic & font styles.
-- FIXED: Resolved an issue where the toolbar host element could intermittently block clicks on LinkedIn's Messaging panel and navigation overlays.
-- IMPROVED: Implemented zero-size anchor host architecture to eliminate all pointer-event conflicts with underlying page elements.
+v1.2.1 Changelog:
+- FIXED: Resolved an issue where the inline floating toolbar could be rendered behind modal dialogs (such as LinkedIn's "Start a post" modal or compose dialogs) due to dynamic DOM insertion order.
+- IMPROVED: Implemented dynamic DOM promotion on activation, guaranteeing 100% visibility and clickability above all dialogs, drawers, and overlay backdrops.
+- PRESERVED: Retained zero-size anchor host architecture to eliminate all pointer-event conflicts with underlying page elements.
 ```

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Inline Text Formatter for LinkedIn & X: Bold, Italic & Font Styles",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Inline text formatter for LinkedIn & X. Format posts, comments, threads & replies with bold, italic & stylish fonts instantly.",
   "icons": {
     "16": "icons/icon-16.png",

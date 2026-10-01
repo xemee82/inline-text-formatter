@@ -2,6 +2,17 @@
 
 All notable changes to Inline Text Formatter are documented in this file.
 
+## [1.2.1] - 2026-10-01
+
+### Fixed: Floating Toolbar Occlusion by Modal Dialogs (LinkedIn & X)
+- **Root cause**: The toolbar host container (`#lif-toolbar-host`) was statically appended to `document.body` during initial page load (`document_idle`). When users subsequently opened a modal dialog (such as LinkedIn's "Start a post" modal or X's Tweet compose dialog), the application dynamically mounted its modal overlay container (`#interop-outlet` / `.artdeco-modal-overlay`) to `document.body`. Under CSS Stacking Context rules, when sibling elements share the same stacking level, Document Order (DOM sequence) determines visual precedence. Because the modal was mounted later, the floating toolbar was rendered underneath the modal card and overlay backdrop, preventing user interaction.
+- **Fix**: Implemented **Dynamic DOM Promotion on Activation**:
+  - `FloatingToolbar.show()` now unconditionally re-appends `hostElement` to the very end of `document.body` (`document.body.appendChild(hostElement)`), guaranteeing that the toolbar is always the latest child in Document Order, rendering on top of any dynamically mounted dialogs.
+  - Dynamically enforces `position: fixed !important`, `z-index: 2147483647 !important`, and `pointer-events: none !important` on the host element.
+  - Added internal `z-index: 2147483647` and `isolation: isolate` to `.lif-toolbar` within the Shadow DOM.
+  - Maintained the zero-size anchor architecture (`width: 0; height: 0; pointer-events: none; overflow: visible`) so underlying clicks and LinkedIn Messaging remain completely unblocked.
+- **Automated Regression Suite**: Added `content/toolbar.test.js` validating DOM promotion, modal outlet occlusion resistance, and stacking context invariants.
+
 ## [1.2.0] - 2026-09-25
 
 ### Rebrand & Differentiation

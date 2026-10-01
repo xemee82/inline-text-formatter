@@ -3,7 +3,8 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const rootDir = path.resolve(__dirname, '..');
-const zipFileName = 'inline-text-formatter-v1.2.0.zip';
+const manifest = JSON.parse(fs.readFileSync(path.join(rootDir, 'manifest.json'), 'utf8'));
+const zipFileName = `inline-text-formatter-v${manifest.version}.zip`;
 const zipPath = path.join(rootDir, zipFileName);
 const icloudDir = '/Users/tylerh/Library/Mobile Documents/com~apple~CloudDocs/Formatly_Store_Assets';
 const icloudRepoDir = '/Users/tylerh/Library/Mobile Documents/com~apple~CloudDocs/linkedin-text-formatter';
