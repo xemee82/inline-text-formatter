@@ -28,7 +28,6 @@ window.FloatingToolbar = (function() {
     hostElement.setAttribute('popover', 'manual');
     hostElement.style.setProperty('position', 'fixed', 'important');
     hostElement.style.setProperty('z-index', '2147483647', 'important');
-    hostElement.style.setProperty('pointer-events', 'none', 'important');
     hostElement.style.setProperty('width', '0', 'important');
     hostElement.style.setProperty('height', '0', 'important');
     hostElement.style.setProperty('overflow', 'visible', 'important');
@@ -188,10 +187,6 @@ window.FloatingToolbar = (function() {
     // 再次强制确保层叠上下文与定位属性不被外部宿主样式污染
     hostElement.style.setProperty('position', 'fixed', 'important');
     hostElement.style.setProperty('z-index', '2147483647', 'important');
-    hostElement.style.setProperty('pointer-events', 'none', 'important');
-
-    // 注意：不在宿主上设置 pointer-events:auto（这正是 Messaging Bug 的根因）
-    // 仅在 Shadow DOM 内部的 .lif-toolbar 上通过 .visible 类启用 pointer-events
     toolbarElement.classList.add('visible');
     isToolbarVisible = true;
 
