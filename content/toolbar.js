@@ -2,6 +2,7 @@
  * 浮动格式化工具栏
  * 使用 open Shadow DOM 隔离样式
  * 采用纯 DOM API 构建（避免使用 innerHTML，彻底兼容 LinkedIn Trusted Types 安全策略）
+ * 采用 HTML5 Popover API 获得原生置顶（Top Layer）权限，无视外部 modal / dialog / stacking context
  * 
  * 精简按钮：Bold / Italic / Bold Italic / Sans-Serif Bold / Revert
  */
@@ -21,18 +22,21 @@ window.FloatingToolbar = (function() {
     hostElement = document.createElement('div');
     hostElement.id = 'lif-toolbar-host';
     hostElement.setAttribute('data-lif-toolbar', 'true');
-    // 使用原生 Popover API (无视外部 z-index 和 stacking context，直接处于顶层)
+    // 使用原生 Popover API (无视外部 z-index 和 stacking context，直接处于 Top Layer 顶层)
     hostElement.setAttribute('popover', 'manual');
     
-    // 重置 Popover 默认的居中样式，使其成为一个 0x0 的定位锚点
+    // 原生 Popover 样式重置：
+    // 核心设计：使用 max-content 使得宿主容器边界严格贴合内部工具栏，
+    // 彻底解决 width:0 导致 Chromium 点击穿透到底层模态框的问题！
     hostElement.style.setProperty('position', 'fixed', 'important');
-    hostElement.style.setProperty('width', '0', 'important');
-    hostElement.style.setProperty('height', '0', 'important');
-    hostElement.style.setProperty('overflow', 'visible', 'important');
+    hostElement.style.setProperty('width', 'max-content', 'important');
+    hostElement.style.setProperty('height', 'max-content', 'important');
     hostElement.style.setProperty('margin', '0', 'important');
     hostElement.style.setProperty('padding', '0', 'important');
     hostElement.style.setProperty('border', 'none', 'important');
+    hostElement.style.setProperty('background', 'transparent', 'important');
     hostElement.style.setProperty('inset', 'unset', 'important');
+    hostElement.style.setProperty('z-index', '2147483647', 'important');
 
     shadowRoot = hostElement.attachShadow({ mode: 'open' });
 
@@ -49,18 +53,9 @@ window.FloatingToolbar = (function() {
         padding: 4px;
         font-family: system-ui, -apple-system, sans-serif;
         font-size: 14px;
-        position: absolute;
-        left: 0;
-        top: 0;
-        opacity: 0;
-        transform: translateY(4px);
-        transition: opacity 0.15s ease, transform 0.1s ease;
+        position: relative;
         white-space: nowrap;
-      }
-
-      .lif-toolbar.visible {
-        opacity: 1;
-        transform: translateY(0);
+        user-select: none;
       }
 
       .lif-toolbar::after {
@@ -94,6 +89,7 @@ window.FloatingToolbar = (function() {
         font-family: inherit;
         font-size: inherit;
         line-height: 1;
+        transition: background-color 0.1s ease;
       }
 
       button:hover {
@@ -141,19 +137,15 @@ window.FloatingToolbar = (function() {
 
     shadowRoot.appendChild(toolbarElement);
 
-    const isX = window.location.hostname.includes('x.com') || window.location.hostname.includes('twitter.com');
-
-    // 针对不同网站采取不同的事件拦截策略
+    // 阻止 mousedown 默认行为，防止编辑器失焦；同时阻断冒泡，防止外界页面全局监听导致选区被破坏
     toolbarElement.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      if (isX) {
-        // X.com 强依赖 stopPropagation，否则 React 全局拦截会强制失焦
-        e.stopPropagation();
-      }
+      e.stopPropagation();
     });
 
+    // 监听按钮点击事件
     toolbarElement.addEventListener('click', (e) => {
-      if (isX) e.stopPropagation();
+      e.stopPropagation();
       const btn = e.target.closest('button[data-style]');
       if (btn && typeof formatCallback === 'function') {
         formatCallback(btn.getAttribute('data-style'));
@@ -163,7 +155,6 @@ window.FloatingToolbar = (function() {
     if (!document.body.contains(hostElement)) {
       document.body.appendChild(hostElement);
     }
-    console.log('[InlineFormatter] 浮动工具栏初始化完成');
   }
 
   function show(rect) {
@@ -173,10 +164,20 @@ window.FloatingToolbar = (function() {
       document.body.appendChild(hostElement);
     }
 
-    toolbarElement.classList.add('visible');
+    // 关键 1：先确保 popover 处于打开状态，脱离 display:none，使其获得真实盒模型尺寸！
+    // 彻底解决之前因初始 0 尺寸导致的“先在右侧闪现、再跳到上方”的双跳动闪烁问题！
+    try {
+      if (!hostElement.matches(':popover-open')) {
+        hostElement.showPopover();
+      }
+    } catch (e) {
+      // Fallback
+    }
+
     isToolbarVisible = true;
 
-    const toolbarRect = toolbarElement.getBoundingClientRect();
+    // 关键 2：此时测量 hostElement 获得 100% 精确的渲染宽高
+    const toolbarRect = hostElement.getBoundingClientRect();
     const gap = 8;
     
     // 水平居中
@@ -195,22 +196,14 @@ window.FloatingToolbar = (function() {
       toolbarElement.classList.remove('arrow-top');
     }
 
-    hostElement.style.left = `${left}px`;
-    hostElement.style.top = `${top}px`;
-
-    try {
-      if (!hostElement.matches(':popover-open')) {
-        hostElement.showPopover();
-      }
-    } catch (e) {
-      // Fallback
-    }
+    // 关键 3：使用 setProperty + important，一步到位绝对就位
+    hostElement.style.setProperty('left', `${left}px`, 'important');
+    hostElement.style.setProperty('top', `${top}px`, 'important');
   }
 
   function hide() {
     if (!hostElement || !toolbarElement) return;
     
-    toolbarElement.classList.remove('visible');
     isToolbarVisible = false;
     
     try {

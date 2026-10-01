@@ -9,8 +9,6 @@
   if (window.__lifInitialized) return;
   window.__lifInitialized = true;
 
-  console.log('[InlineFormatter] Content Script loaded on', window.location.hostname);
-
   let currentSelectionInfo = null;
 
   // 1. 初始化浮动工具栏
@@ -55,5 +53,5 @@
     }
   });
 
-  console.log('[InlineFormatter] All modules ready ✓');
+  console.log('[InlineFormatter] Content Script loaded on', window.location.hostname);
 })();

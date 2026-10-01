@@ -74,6 +74,15 @@ class MockElement {
     return this.shadowRoot;
   }
 
+  contains(child) {
+    let curr = child;
+    while (curr) {
+      if (curr === this) return true;
+      curr = curr.parentNode;
+    }
+    return false;
+  }
+
   get classList() {
     const self = this;
     return {
