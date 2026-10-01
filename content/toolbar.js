@@ -1,12 +1,9 @@
 /**
  * 浮动格式化工具栏
  * 使用 open Shadow DOM 隔离样式
- * 采用纯 DOM API 构建（避免使用 innerHTML，彻底兼容 Trusted Types 安全策略）
- *
- * 安全架构：
- *   宿主 (#lif-toolbar-host) 是 width:0 height:0 pointer-events:none 的零尺寸锚点。
- *   仅 Shadow DOM 内部的 .lif-toolbar.visible 拥有 pointer-events:auto。
- *   这确保不会出现大面积透明遮罩拦截页面点击（Messaging、导航等）的问题。
+ * 采用纯 DOM API 构建（避免使用 innerHTML，彻底兼容 LinkedIn Trusted Types 安全策略）
+ * 
+ * 精简按钮：Bold / Italic / Bold Italic / Sans-Serif Bold / Revert
  */
 window.FloatingToolbar = (function() {
   let hostElement = null;
@@ -21,23 +18,22 @@ window.FloatingToolbar = (function() {
     formatCallback = onFormatClick;
 
     // 创建宿主元素并附加 Shadow DOM
-    // 宿主本身是零尺寸锚点，内部工具栏通过 overflow:visible 溢出呈现
     hostElement = document.createElement('div');
     hostElement.id = 'lif-toolbar-host';
     hostElement.setAttribute('data-lif-toolbar', 'true');
+    // 使用原生 Popover API (无视外部 z-index 和 stacking context，直接处于顶层)
     hostElement.setAttribute('popover', 'manual');
+    
+    // 重置 Popover 默认的居中样式，使其成为一个 0x0 的定位锚点
     hostElement.style.setProperty('position', 'fixed', 'important');
-    hostElement.style.setProperty('z-index', '2147483647', 'important');
     hostElement.style.setProperty('width', '0', 'important');
     hostElement.style.setProperty('height', '0', 'important');
     hostElement.style.setProperty('overflow', 'visible', 'important');
     hostElement.style.setProperty('margin', '0', 'important');
-    hostElement.style.setProperty('border', 'none', 'important');
     hostElement.style.setProperty('padding', '0', 'important');
-    hostElement.style.setProperty('background', 'transparent', 'important');
+    hostElement.style.setProperty('border', 'none', 'important');
     hostElement.style.setProperty('inset', 'unset', 'important');
-    hostElement.style.left = '0px';
-    hostElement.style.top = '0px';
+
     shadowRoot = hostElement.attachShadow({ mode: 'open' });
 
     // 1. 注入隔离样式 (使用 textContent 彻底规避 Trusted Types 拦截)
@@ -56,10 +52,7 @@ window.FloatingToolbar = (function() {
         position: absolute;
         left: 0;
         top: 0;
-        z-index: 2147483647;
-        isolation: isolate;
         opacity: 0;
-        pointer-events: none;
         transform: translateY(4px);
         transition: opacity 0.15s ease, transform 0.1s ease;
         white-space: nowrap;
@@ -67,7 +60,6 @@ window.FloatingToolbar = (function() {
 
       .lif-toolbar.visible {
         opacity: 1;
-        pointer-events: auto;
         transform: translateY(0);
       }
 
@@ -118,7 +110,7 @@ window.FloatingToolbar = (function() {
     `;
     shadowRoot.appendChild(styleEl);
 
-    // 2. 纯 DOM API 方式创建工具栏，彻底规避 innerHTML
+    // 2. 纯 DOM API 方式创建工具栏
     toolbarElement = document.createElement('div');
     toolbarElement.className = 'lif-toolbar';
     toolbarElement.setAttribute('role', 'toolbar');
@@ -128,7 +120,6 @@ window.FloatingToolbar = (function() {
       const btn = document.createElement('button');
       btn.setAttribute('data-style', style);
       btn.setAttribute('title', title);
-      btn.setAttribute('type', 'button');
       btn.textContent = text;
       if (isBold) btn.style.fontWeight = 'bold';
       if (isItalic) btn.style.fontStyle = 'italic';
@@ -150,20 +141,10 @@ window.FloatingToolbar = (function() {
 
     shadowRoot.appendChild(toolbarElement);
 
-    // 阻止 mousedown 和 pointerdown 默认行为，防止编辑器失焦
+    // 回归 1.0.0 的简单逻辑：仅阻止 mousedown 默认行为，防止编辑器失焦。
+    // 绝不使用 stopPropagation()，否则 SelectionDetector 无法知道点击了工具栏！
     toolbarElement.addEventListener('mousedown', (e) => {
       e.preventDefault();
-      e.stopPropagation();
-    });
-    toolbarElement.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-    });
-    toolbarElement.addEventListener('mouseup', (e) => {
-      e.stopPropagation();
-    });
-    toolbarElement.addEventListener('pointerup', (e) => {
-      e.stopPropagation();
     });
 
     // 监听按钮点击事件
@@ -174,29 +155,19 @@ window.FloatingToolbar = (function() {
       }
     });
 
-    document.body.appendChild(hostElement);
-    console.log('[InlineFormatter] 浮动工具栏初始化完成 (Trusted Types 安全模式)');
+    if (!document.body.contains(hostElement)) {
+      document.body.appendChild(hostElement);
+    }
+    console.log('[InlineFormatter] 浮动工具栏初始化完成');
   }
 
   function show(rect) {
     if (!hostElement || !toolbarElement) return;
 
-    // v1.2.2 核心修复：使用原生 Popover API 晋升到 Top Layer
-    // 无论 LinkedIn 的弹窗 (如 artdeco-modal) 如何使用 z-index，Top Layer 永远在最上层
-    try {
-      if (!hostElement.matches(':popover-open')) {
-        hostElement.showPopover();
-      }
-    } catch (e) {
-      // Fallback for older browsers
-      if (!document.body.contains(hostElement)) {
-        document.body.appendChild(hostElement);
-      }
+    if (!document.body.contains(hostElement)) {
+      document.body.appendChild(hostElement);
     }
 
-    // 再次强制确保层叠上下文与定位属性不被外部宿主样式污染
-    hostElement.style.setProperty('position', 'fixed', 'important');
-    hostElement.style.setProperty('z-index', '2147483647', 'important');
     toolbarElement.classList.add('visible');
     isToolbarVisible = true;
 
@@ -221,6 +192,14 @@ window.FloatingToolbar = (function() {
 
     hostElement.style.left = `${left}px`;
     hostElement.style.top = `${top}px`;
+
+    try {
+      if (!hostElement.matches(':popover-open')) {
+        hostElement.showPopover();
+      }
+    } catch (e) {
+      // Fallback
+    }
   }
 
   function hide() {
@@ -228,12 +207,12 @@ window.FloatingToolbar = (function() {
     
     toolbarElement.classList.remove('visible');
     isToolbarVisible = false;
+    
     try {
       if (hostElement.matches(':popover-open')) {
         hostElement.hidePopover();
       }
     } catch (e) {}
-    // 宿主始终保持 pointer-events:none，无需额外清理
   }
 
   function isVisible() {
