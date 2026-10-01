@@ -25,12 +25,18 @@ window.FloatingToolbar = (function() {
     hostElement = document.createElement('div');
     hostElement.id = 'lif-toolbar-host';
     hostElement.setAttribute('data-lif-toolbar', 'true');
+    hostElement.setAttribute('popover', 'manual');
     hostElement.style.setProperty('position', 'fixed', 'important');
     hostElement.style.setProperty('z-index', '2147483647', 'important');
     hostElement.style.setProperty('pointer-events', 'none', 'important');
     hostElement.style.setProperty('width', '0', 'important');
     hostElement.style.setProperty('height', '0', 'important');
     hostElement.style.setProperty('overflow', 'visible', 'important');
+    hostElement.style.setProperty('margin', '0', 'important');
+    hostElement.style.setProperty('border', 'none', 'important');
+    hostElement.style.setProperty('padding', '0', 'important');
+    hostElement.style.setProperty('background', 'transparent', 'important');
+    hostElement.style.setProperty('inset', 'unset', 'important');
     hostElement.style.left = '0px';
     hostElement.style.top = '0px';
     shadowRoot = hostElement.attachShadow({ mode: 'open' });
@@ -166,12 +172,18 @@ window.FloatingToolbar = (function() {
   function show(rect) {
     if (!hostElement || !toolbarElement) return;
 
-    // 核心修复：无条件将宿主重新 append 到 document.body 末尾
-    // 现代 SPA (如 LinkedIn / X) 会动态挂载弹窗、抽屉或遮罩容器 (如 #interop-outlet、artdeco-modal-outlet)
-    // 根据 CSS 层叠上下文规范，同级正 z-index 定位元素在层叠冲突时，以 DOM 树先后顺序 (Document Order) 决定层叠
-    // 无论外部何时插入了何种高层级弹窗，只要每次激活时重新 append 到 body 末尾，宿主元素就始终位居 DOM 树最底端，
-    // 从而 100% 绝对置顶于任何动态弹窗遮罩之上，彻底解决浮窗被弹窗遮挡的问题。
-    document.body.appendChild(hostElement);
+    // v1.2.2 核心修复：使用原生 Popover API 晋升到 Top Layer
+    // 无论 LinkedIn 的弹窗 (如 artdeco-modal) 如何使用 z-index，Top Layer 永远在最上层
+    try {
+      if (!hostElement.matches(':popover-open')) {
+        hostElement.showPopover();
+      }
+    } catch (e) {
+      // Fallback for older browsers
+      if (!document.body.contains(hostElement)) {
+        document.body.appendChild(hostElement);
+      }
+    }
 
     // 再次强制确保层叠上下文与定位属性不被外部宿主样式污染
     hostElement.style.setProperty('position', 'fixed', 'important');
@@ -211,6 +223,11 @@ window.FloatingToolbar = (function() {
     
     toolbarElement.classList.remove('visible');
     isToolbarVisible = false;
+    try {
+      if (hostElement.matches(':popover-open')) {
+        hostElement.hidePopover();
+      }
+    } catch (e) {}
     // 宿主始终保持 pointer-events:none，无需额外清理
   }
 
