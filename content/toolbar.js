@@ -150,9 +150,19 @@ window.FloatingToolbar = (function() {
 
     shadowRoot.appendChild(toolbarElement);
 
-    // 阻止 mousedown 默认行为，防止编辑器失焦
+    // 阻止 mousedown 和 pointerdown 默认行为，防止编辑器失焦
     toolbarElement.addEventListener('mousedown', (e) => {
       e.preventDefault();
+      e.stopPropagation();
+    });
+    toolbarElement.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    toolbarElement.addEventListener('mouseup', (e) => {
+      e.stopPropagation();
+    });
+    toolbarElement.addEventListener('pointerup', (e) => {
       e.stopPropagation();
     });
 
