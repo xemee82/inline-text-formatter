@@ -141,14 +141,19 @@ window.FloatingToolbar = (function() {
 
     shadowRoot.appendChild(toolbarElement);
 
-    // 回归 1.0.0 的简单逻辑：仅阻止 mousedown 默认行为，防止编辑器失焦。
-    // 绝不使用 stopPropagation()，否则 SelectionDetector 无法知道点击了工具栏！
+    const isX = window.location.hostname.includes('x.com') || window.location.hostname.includes('twitter.com');
+
+    // 针对不同网站采取不同的事件拦截策略
     toolbarElement.addEventListener('mousedown', (e) => {
       e.preventDefault();
+      if (isX) {
+        // X.com 强依赖 stopPropagation，否则 React 全局拦截会强制失焦
+        e.stopPropagation();
+      }
     });
 
-    // 监听按钮点击事件
     toolbarElement.addEventListener('click', (e) => {
+      if (isX) e.stopPropagation();
       const btn = e.target.closest('button[data-style]');
       if (btn && typeof formatCallback === 'function') {
         formatCallback(btn.getAttribute('data-style'));
