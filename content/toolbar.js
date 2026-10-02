@@ -160,8 +160,17 @@ window.FloatingToolbar = (function() {
   function show(rect) {
     if (!hostElement || !toolbarElement) return;
 
-    if (!document.body.contains(hostElement)) {
-      document.body.appendChild(hostElement);
+    // 智能挂载：如果当前选区或焦点处于原生 <dialog> 模态弹窗内（如 LinkedIn Start a Post），
+    // 必须将 hostElement 挂载在该 <dialog> 内部，规避 showModal() 的底层交互隔离屏蔽；
+    // 否则正常挂载在 document.body。
+    const sel = typeof window.getSelection === 'function' ? window.getSelection() : null;
+    const activeDialog = document.activeElement?.closest?.('dialog[open]') || 
+                         sel?.anchorNode?.parentElement?.closest?.('dialog[open]') ||
+                         document.querySelector?.('dialog[open]');
+    const targetParent = activeDialog || document.body;
+
+    if (hostElement.parentNode !== targetParent) {
+      targetParent.appendChild(hostElement);
     }
 
     // 关键 1：先确保 popover 处于打开状态，脱离 display:none，使其获得真实盒模型尺寸！
