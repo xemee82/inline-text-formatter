@@ -1,21 +1,19 @@
 /**
- * 宿主元素样式 — 所有工具栏样式都在 Shadow DOM 内部
+ * 宿主元素全局样式重置
  *
- * 安全约束：
- *   宿主永远是 width:0 height:0 + overflow:visible 的零尺寸锚点，
- *   pointer-events 永远为 none。
- *   仅 Shadow DOM 内部的 .lif-toolbar.visible 拥有 pointer-events:auto。
- *   这确保宿主元素不会拦截页面任何区域的点击（包括 Messaging 入口等覆盖层元素）。
+ * 配合原生 Popover API (Top Layer):
+ * 1. 消除默认居中、边框与内边距
+ * 2. 宿主物理盒模型严格贴合内容 (max-content)，彻底删除 pointer-events: none 与 width: 0
+ * 3. 正常接收指针事件，Popover 关闭时浏览器原生将其置为 display: none，物理上不可能产生任何点击遮挡
  */
 #lif-toolbar-host {
   position: fixed !important;
   z-index: 2147483647 !important;
-  pointer-events: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  overflow: visible !important;
   margin: 0 !important;
   padding: 0 !important;
   border: none !important;
   background: transparent !important;
+  inset: unset !important;
+  width: max-content !important;
+  height: max-content !important;
 }
