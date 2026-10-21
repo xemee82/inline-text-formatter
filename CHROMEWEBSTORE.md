@@ -1,7 +1,7 @@
 # Chrome Web Store & Edge Add-ons 开发者后台提交完整指南
 
-> **版本**：v1.2.1  
-> **最后更新**：2026-10-01  
+> **版本：v1.2.9  
+> **最后更新：2026-10-02  
 > **适用平台**：Google Chrome Web Store Developer Dashboard / Microsoft Edge Partner Center  
 > **项目名称**：Inline Text Formatter for LinkedIn & X: Bold, Italic & Font Styles  
 
